@@ -5,6 +5,11 @@
 ## Copyright (C) 2024 - 2024 Benjamin Grande M. S. <ben.grande.b@gmail.com>
 ## See the file COPYING for copying conditions.
 
+## Configuration variables (INT_IF, GATEWAY_ALLOW_*, *_PORT_*, ...) are sourced
+## from /etc/whonix_firewall.d at runtime and defaulted in the
+## common_variables_defaults* functions, so shellcheck cannot see their
+## assignments; set -o nounset is the real unset-variable guard here.
+# shellcheck disable=SC2154
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -368,9 +373,22 @@ nft_prerouting_antispoof_gateway() {
   ## server over clearnet. Note that such an attack is not known to work even
   ## when this configuration is missing.
   ${nftables_cmd} "add chain inet filter prerouting { type filter hook prerouting priority raw; }"
-  local int_if_item
-  for int_if_item in ${INT_IF}; do
-    ${nftables_cmd} add rule inet filter prerouting iifname "${int_if_item}" fib saddr . iif oif missing counter drop
+  ## Cover EVERY internal interface that carries a workstation-facing input accept:
+  ## INT_IF (TransPort) and INT_TIF (DnsPort, Control Port Filter Proxy, Socks
+  ## ports, 9152-9229). These are the same interface by default, but differ when a
+  ## VPN tunnel sits between Workstation and Gateway (INT_TIF=tun0); guarding only
+  ## INT_IF would leave the INT_TIF-only accepts taking a forged source with no
+  ## uRPF. Deduplicated so the default INT_IF==INT_TIF yields a single rule.
+  local antispoof_if_item antispoof_seen=""
+  for antispoof_if_item in ${INT_IF} ${INT_TIF}; do
+    ## De-duplicate: the default INT_IF==INT_TIF must yield a single rule.
+    case " ${antispoof_seen} " in
+      *" ${antispoof_if_item} "*)
+        continue
+        ;;
+    esac
+    antispoof_seen="${antispoof_seen} ${antispoof_if_item}"
+    ${nftables_cmd} add rule inet filter prerouting iifname "${antispoof_if_item}" fib saddr . iif oif missing counter drop
   done
 }
 
