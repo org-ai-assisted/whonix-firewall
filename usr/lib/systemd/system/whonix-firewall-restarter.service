@@ -40,16 +40,22 @@ ProtectHome=true
 ## writable dirs non-executable (file-backed exec). firewall-restarter is bash; it
 ## waits on sdwdate then asks systemd over D-Bus to restart whonix-firewall.service
 ## -- the firewall rules run in THAT separate unit, not as a child here, so no
-## privilege-gaining child inherits this seccomp, and no explicit NoNewPrivileges
-## is set here (this root unit runs NoNewPrivs=0). W^X still holds: MDWE is the
-## PR_SET_MDWE prctl and the ~memfd_create seccomp installs via the root
-## executor's CAP_SYS_ADMIN -- both independent of no_new_privs (verified live:
-## NoNewPrivs=0, Seccomp=2).
+## privilege-gaining child inherits this unit's restrictions. (W^X itself does
+## not require no_new_privs: MDWE is the PR_SET_MDWE prctl and the ~memfd_create
+## seccomp installs via the root executor's CAP_SYS_ADMIN -- both independent of
+## no_new_privs.)
 MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
 LockPersonality=true
 SystemCallFilter=~memfd_create
 NoExecPaths=/run /tmp /var/tmp /dev/shm /dev
+
+## Defense-in-depth (separate axis from W^X): NoNewPrivileges blocks this root
+## daemon from gaining privileges (setuid/setgid, file capabilities, AppArmor
+## non-subset Px). The restart is a systemctl D-Bus call to PID1 (the firewall
+## rules run in whonix-firewall.service, not as a child here), so nothing here
+## needs privilege gain.
+NoNewPrivileges=yes
 
 ExecStart=/usr/libexec/whonix-firewall/firewall-restarter
 
