@@ -45,7 +45,7 @@ MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
 LockPersonality=true
 SystemCallFilter=~memfd_create
-NoExecPaths=/run /tmp /var/tmp /dev/shm
+NoExecPaths=/run /tmp /var/tmp /dev/shm /dev
 
 ExecStart=/usr/libexec/whonix-firewall/firewall-restarter
 
