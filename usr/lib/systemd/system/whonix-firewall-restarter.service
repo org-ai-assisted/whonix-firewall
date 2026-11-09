@@ -27,6 +27,11 @@ Type=simple
 SuccessExitStatus=143
 KillMode=control-group
 PrivateTmp=true
+## Shrink the file-backed exec residual for this root daemon: ProtectSystem=full
+## makes /usr,/boot,/etc read-only and ProtectHome hides homes (it only reads
+## /run/sdwdate and asks systemd over D-Bus). Not strict: it may touch /var,/run.
+ProtectSystem=full
+ProtectHome=true
 
 ## W^X hardening (anonymous + file-backed). MemoryDenyWriteExecute denies anon
 ## W+X and mprotect/shmat gaining PROT_EXEC; SystemCallArchitectures=native closes
