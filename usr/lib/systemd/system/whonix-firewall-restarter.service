@@ -40,7 +40,11 @@ ProtectHome=true
 ## writable dirs non-executable (file-backed exec). firewall-restarter is bash; it
 ## waits on sdwdate then asks systemd over D-Bus to restart whonix-firewall.service
 ## -- the firewall rules run in THAT separate unit, not as a child here, so no
-## privilege-gaining child inherits this seccomp (NoNewPrivileges stays on).
+## privilege-gaining child inherits this seccomp, and no explicit NoNewPrivileges
+## is set here (this root unit runs NoNewPrivs=0). W^X still holds: MDWE is the
+## PR_SET_MDWE prctl and the ~memfd_create seccomp installs via the root
+## executor's CAP_SYS_ADMIN -- both independent of no_new_privs (verified live:
+## NoNewPrivs=0, Seccomp=2).
 MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
 LockPersonality=true
