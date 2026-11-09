@@ -28,6 +28,20 @@ SuccessExitStatus=143
 KillMode=control-group
 PrivateTmp=true
 
+## W^X hardening (anonymous + file-backed). MemoryDenyWriteExecute denies anon
+## W+X and mprotect/shmat gaining PROT_EXEC; SystemCallArchitectures=native closes
+## the secondary-ABI (i386) bypass; LockPersonality blocks READ_IMPLIES_EXEC;
+## SystemCallFilter=~memfd_create kills the memfd bypass; NoExecPaths marks the
+## writable dirs non-executable (file-backed exec). firewall-restarter is bash; it
+## waits on sdwdate then asks systemd over D-Bus to restart whonix-firewall.service
+## -- the firewall rules run in THAT separate unit, not as a child here, so no
+## privilege-gaining child inherits this seccomp (NoNewPrivileges stays on).
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+LockPersonality=true
+SystemCallFilter=~memfd_create
+NoExecPaths=/run /tmp /var/tmp /dev/shm
+
 ExecStart=/usr/libexec/whonix-firewall/firewall-restarter
 
 [Install]
