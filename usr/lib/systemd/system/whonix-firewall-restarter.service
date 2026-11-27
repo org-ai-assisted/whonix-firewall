@@ -28,6 +28,16 @@ SuccessExitStatus=143
 KillMode=control-group
 PrivateTmp=true
 
+ProtectSystem=full
+ProtectHome=true
+
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+LockPersonality=true
+SystemCallFilter=~memfd_create
+NoExecPaths=/run /tmp /var/tmp /dev/shm /dev
+NoNewPrivileges=yes
+
 ExecStart=/usr/libexec/whonix-firewall/firewall-restarter
 
 [Install]
